@@ -20,8 +20,7 @@ display = sh1106.SH1106_SPI(128, 64, machine.SPI(1), machine.Pin(5), machine.Pin
 display.rotate(180)
 
 # Sensor
-# i2c = machine.I2C(0, scl=machine.Pin(9), sda=machine.Pin(8), freq=400000)
-
+i2c = machine.I2C(0, scl=machine.Pin(9), sda=machine.Pin(8), freq=400000)
 
 def button_handler(pin):
     global btn_prev, btn_next, btn_up, btn_down, btn_prev_last, btn_next_last, btn_up_last, btn_down_last
@@ -59,8 +58,11 @@ btn_next.irq(trigger=machine.Pin.IRQ_RISING, handler=button_handler)
 btn_up.irq(trigger=machine.Pin.IRQ_RISING, handler=button_handler)
 btn_down.irq(trigger=machine.Pin.IRQ_RISING, handler=button_handler)
 
+
+
 while True:
     display.fill(0)
+    utime.sleep(1)
     try:
         # Send the start conversion command to the SHT31
         i2c.writeto(0x44, bytes([0x2C, 0x06]))
@@ -79,8 +81,9 @@ while True:
         # print the data to the OLED display
         display.text("TEMP:" + ("%.2f" % cTemp) + 'C', 20, 10)
         display.text("HUMI:" + ("%.2f" % humidity) + '%', 20, 20)
-
     except:
-        print("No data")
-        display.text("NO DATA", 20, 30)
+        message_nodata = "NO DATA :("
+        display.text(message_nodata, 20, 10)
+        print(message_nodata)
+
     display.show()
