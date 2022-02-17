@@ -1,4 +1,4 @@
-from machine import Pin, I2C
+from machine import Pin, I2C, PWM
 import sh1106
 import utime
 import framebuf
@@ -13,6 +13,9 @@ CURRENT_SCREEN = "temp_display"
 TEMP_DISPLAY = True
 TEMP_IDEAL = 30
 TEMP_MARGIN = 2
+PAD_LG = 40000 # from 0 to 65025 corresponding 0 to 100%
+FAN_LG = 50000 # from 0 to 65025 corresponding 0 to 100%
+FAN_MD = 20000 # from 0 to 65025 corresponding 0 to 100%
 
 # Sensor
 i2c_sensor = I2C(0, scl = Pin(13), sda = Pin(12), freq = 400000)
@@ -26,9 +29,13 @@ display.fill(0)
 
 # Heating pad
 pad = Pin(5, Pin.OUT)
+pad_pwm = PWM(pad)
+pad_pwm.freq(1000)
 
 # Fan
 fan = Pin(6, Pin.OUT)
+fan_pwm = PWM(fan)
+fan_pwm.freq(1000)
 fan.value(0)
 
 # RGB LED
@@ -190,8 +197,8 @@ while True:
         humidity_unit = ""
 
     if temp_c < TEMP_IDEAL:
-        pad.on()
-        fan.on()
+        pad_pwm.duty_u16(PAD_LG)
+        fan_pwm.duty_u16(FAN_MD)
         rgb_led("red")
     elif temp_c >= TEMP_IDEAL and temp_c <= TEMP_IDEAL + TEMP_MARGIN:
         fan.off()
@@ -199,22 +206,18 @@ while True:
         rgb_led("green")
     elif temp_c > TEMP_IDEAL + TEMP_MARGIN:
         pad.off()
-        fan.on()
+        fan_pwm.duty_u16(FAN_LG)
         rgb_led("blue")
     else:
         pad.off()
         fan.off()
         rgb_led("clear")
 
-    print(CURRENT_SCREEN)
     if CURRENT_SCREEN == "temp_set":
         display_temp_set(TEMP_IDEAL)
     elif CURRENT_SCREEN == "temp_display":
         display_temp(temp_c_unit)
-    
 
-    print("temp: " + temp_c_unit)
-    print("humi: " + humidity_unit)
     utime.sleep(.1)
         
     
